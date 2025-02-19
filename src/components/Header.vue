@@ -6,14 +6,30 @@
       </div>
       DeepSeek-R1 Chat
     </div>
-    <el-link type="primary" @Click="showAbout">关于本网站</el-link>
+    <div class="title">
+      <el-link type="primary" @Click="handelUpdateLog">日志/反馈</el-link>
+    <el-link type="primary" @Click="showAbout">关于</el-link>
+    </div>
   </el-header>
+  <el-drawer
+    title="反馈/日志"
+    v-model="drawerVisible"
+    size="fit-content"
+       :append-to-body="true" 
+       :modal-append-to-body="false">
+       <h2>反馈：</h2>
+       <iframe width="100%" height="500px" src="https://forms.office.com/Pages/ResponsePage.aspx?id=DQSIkWdsW0yxEjajBLZtrQAAAAAAAAAAAAN__mHHsEJUNzNYVU04Q0ZGVThFTjdUOTQyMEY4U1FGWi4u&embed=true" frameborder="0" marginwidth="0" marginheight="0" style="border: none; max-width:100%; max-height:100vh" allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen> </iframe>
+       <h2>更新日志：</h2>
+       <MarkDown :content="log" :finished="true"/>
+    </el-drawer>
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue';
 import { ElMessageBox } from 'element-plus';
+import MarkDown from './MarkDown.vue';
 const showAbout = () => {
-  ElMessageBox.alert(['本网站向安徽理工大学所有师生提供免费的稳定的 Deepseek R1 对话服务。', 
+  ElMessageBox.alert(['本网站向安徽理工大学所有师生提供免费稳定的 Deepseek R1 对话服务。', 
   '后端开发：王子涵',
     "前端开发：程旭"
   ].join("<br/>"),
@@ -23,6 +39,19 @@ const showAbout = () => {
     dangerouslyUseHTMLString: true
   });
 };
+
+const drawerVisible = ref(false);
+const handelUpdateLog=()=>{
+  drawerVisible.value=true;
+}
+const log = ref('');
+fetch('https://raw.githubusercontent.com/ProgramCX/deepseek-r1-chat/refs/heads/main/doc/CHANGELOG.md')
+  .then(response => response.text())
+  .then(data => {
+    log.value = data;
+  }).catch(() => {
+    log.value = '由于网络因素，更新日志加载失败。还请刷新试试。';
+  });
 </script>
 
 <style>
@@ -69,5 +98,25 @@ const showAbout = () => {
 .userImg img {
   height: 100%;
   width: 100%;
+}
+
+#drawer {
+  width: 50vw;
+}
+@media screen and (max-width: 768px) {
+  .title {
+    font-size: 15px;
+  }
+  .userImg {
+    height: 30px;
+    width: 30px;
+  }
+  .userImg img {
+    height: 100%;
+    width: 100%;
+  }
+  #drawer {
+    width: 90vw;
+  }
 }
 </style>

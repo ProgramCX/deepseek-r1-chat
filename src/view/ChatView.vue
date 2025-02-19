@@ -131,18 +131,19 @@ const handleStop = () => {
 
 .chat-input {
     width: 100%;
+    height: fit-content;
     display: flex;
     justify-content: center;
     padding: 10px;
-    background-color: rbg(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
+    background-color: rbg(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
     --webkit-backdrop-filter: blur(10px);
 }
 
 
 .input-box {
     width: 80%;
-    height: 250px;
+    height: fit-content;
 }
 
 .init-chat-view {
@@ -157,6 +158,4 @@ const handleStop = () => {
     position: sticky;
     bottom: 0;
 }
-
-
 </style>

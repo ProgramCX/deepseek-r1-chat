@@ -3,7 +3,7 @@
         <div class="image-area">
             <ImageComponent v-for="image in imageFiles" v-bind:key="image" :src="image" @cancel="handleCancel" />
         </div>
-        <el-input @keyup.enter="onKeyup" style="width: 100%;" :autosize="{ minRows: 8, maxRows: 16 }" type="textarea"
+        <el-input @keyup.enter="onKeyup" style="width: 100%" :autosize="{ minRows: 6, maxRows: 14 }" resize="none"  type="textarea"
             v-model="text"></el-input>
         <div class="button-area">
             <!-- <el-button @click="upload" :disabled="!outputDone">上传图片</el-button> -->
@@ -13,7 +13,6 @@
                     @click="onSend">发送</el-button>
                 <el-button type="danger" @click="onStop" v-if="!outputDone">停止</el-button>
             </div>
-
         </div>
     </div>
 </template>
@@ -22,6 +21,7 @@ import { ref, watch } from 'vue'
 import { useMessageStore } from '../store/MessageStore';
 const messageStore = useMessageStore();
 import ImageComponent from './ImageComponent.vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 const props = defineProps<{
     outputDone: Boolean,
 }>();
@@ -29,8 +29,16 @@ const props = defineProps<{
 const emit = defineEmits(['send', 'stop']);
 const text = ref('');
 const clear = () => {
-    messageStore.messages = [];
-    window.location.reload();
+    ElMessageBox.confirm('确定要清空对话吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => {
+        messageStore.messages = [];
+        window.location.reload();
+    }).catch(() => {
+        ElMessage.info('已取消清空对话');
+    });
 }
 const outputDone = ref(props.outputDone);
 
@@ -132,15 +140,8 @@ div /deep/.el-input__inner {
 
 @media screen and (max-width: 600px) {
     .input-box {
-        min-width: 300px;
-
+        min-width: 90vw;
     }
-
-    .text-area {
-        width: 200px;
-
-    }
-
 
 }
 </style>

@@ -9,7 +9,7 @@ export async function sendDeepseekMessage(content:string): Promise<any> {
         messageStore.messages = messageStore.messages.slice(-10)
     }
     let history = "你和用户聊天的历史记录（非用户输入）"+messageStore.messages.map((item) => item.role=="user"?"用户：":"助手："+ item.content).join('||')+"\n用户此时发送给你的消息："
-   return fetch('/api/chat', {
+   return fetch('/chat', {
         signal,
         method: 'POST',
         headers: {
