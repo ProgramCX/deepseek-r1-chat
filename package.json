@@ -14,7 +14,11 @@
     "element-plus": "^2.9.4",
     "highlight.js": "^11.11.1",
     "hljs": "^6.2.3",
+    "html-loader": "^0.5.5",
+    "install": "^0.13.0",
+    "markdown-loader": "^8.0.0",
     "marked": "^15.0.7",
+    "npm": "^10.9.2",
     "pinia": "^3.0.1",
     "pinia-plugin-persistedstate": "^4.2.0",
     "vue": "^3.5.13"

@@ -32,7 +32,7 @@
 </template>
 <script lang="ts" setup>
 import MarkDown from './MarkDown.vue';
-import { computed, defineProps, watch } from 'vue';
+import { computed, defineProps, nextTick, watch } from 'vue';
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useMessageStore } from '../store/MessageStore';
@@ -101,7 +101,10 @@ watch(() => props.contentText, () => {
 }, { immediate: true });
 
 watch(() => props.finished, () => {
-    console.log(isCurrent.value);
+    if(props.type === 'user'){
+        outputFinished.value = true;
+        return;
+    }
     if(isCurrent.value)
         outputFinished.value = props.finished;
     else
@@ -109,11 +112,22 @@ watch(() => props.finished, () => {
 }, { immediate: true });
 
 watch(() => isCurrent, () => {
+    if(props.type === 'user'){
+        outputFinished.value = true;
+        return;
+    }
     if(isCurrent.value)
         outputFinished.value = props.finished;
     else
         outputFinished.value = true;
 }, { immediate: true });
+
+nextTick(()=>{
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
+})
 
 </script>
 
@@ -140,7 +154,7 @@ textarea {
     background-color: rgb(243, 243, 243);
     overflow-x: auto;
     box-shadow: 0px 0px 14px 0px rgba(100, 100, 111, 0.2);
-    cursor: progress;
+    cursor: text;
 }
 
 .bubble:hover {

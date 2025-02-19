@@ -24,19 +24,12 @@ marked.use({
             const highlighted = hljs.highlight(token.text, { language: validLang }).value;
             return `<pre><div class="wrapper"><code class="hljs">${highlighted}</code><button id="copy-btn">复制</button></div></pre>`;
         },
-        // 自定义 HTML 渲染，处理 <think> 标签
-    html(html: string) {
-      // 捕获并替换 <think> 标签内部的内容，保留文字
-      return html.replace(/<think>(.*?)<\/think>/g, (match, content) => {
-        return `<blockquote style="color: #3498db; font-weight: bold; background-color: yellow;">${content}</blockquote>`;
-      });
-    },
     },
 });
 
 // 解析 Markdown
 const updateData = async () => {
-    let content = props.content;
+    let content = props.content.replace(/<think>([\s\S]*?)<\/think>/g, '<blockquote>$1</blockquote>');
     if (!outputFinished.value) {
         content += '⚫';
     }
@@ -63,6 +56,16 @@ const copyCode = (event: Event) => {
     });
 };
 
+setInterval(() => {
+    const thinkElements = document.querySelectorAll("think");
+    //如果标签为空，则隐藏
+    thinkElements.forEach((thinkElement:Element) => {
+        if (thinkElement.textContent=='\n\n') {
+            thinkElement.style.display = "none";
+        }
+    });
+}, 100);
+
 // 监听属性变化，实时更新
 watch(() => props.content, updateData, { immediate: true });
 watch(() => props.finished, () => {
@@ -72,6 +75,7 @@ watch(() => props.finished, () => {
 </script>
 
 <style scoped>
+
 .markdown-body {
     padding: 16px;
     border-radius: 5px;
@@ -198,6 +202,7 @@ blockquote{
   border-radius: 0 10px 10px 0;
   background-color: #a0a0a014;
   border-left: 3px solid #2983cc;
+  color:grey
 }
 blockquote p{
   margin: 2px 0;
@@ -232,4 +237,20 @@ th, td {
 tbody tr:nth-of-type(even) {
   background-color: #a0a0a018;
 }
+
+think{
+  margin-block-start: 5px;
+  margin-block-end: 5px;
+  margin-inline-start: 10px;
+  margin-inline-end: 0;
+  padding: 5px 5px 5px 15px;
+  border-radius: 0 10px 10px 0;
+  background-color: #4a4a4a14;
+  border-left: 3px solid #2983cc;
+}
+
+think:empty{
+  display: none;
+}
+
 </style>

@@ -10,7 +10,6 @@ export const useMessageStore=defineStore("messageStore",{
     actions:{
         addMessage(message: chatMessage){
             this.messages.push(message)
-            console.log("addMessage", this.messages)
         },
         clearMessages(){
             this.messages=[]

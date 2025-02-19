@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { nextTick } from 'vue';
 import Header from './components/Header.vue';
 import ChatView from './view/ChatView.vue';
+
 </script>
 
 <template>
@@ -14,6 +16,7 @@ import ChatView from './view/ChatView.vue';
 
 <style>
 @import './style.css';
+
 body,html{
   margin: 0;
   padding: 0;

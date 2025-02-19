@@ -3,10 +3,11 @@
         <div class="image-area">
             <ImageComponent v-for="image in imageFiles" v-bind:key="image" :src="image" @cancel="handleCancel" />
         </div>
-        <el-input @keyup.enter="onKeyup()" style="width: 100%" :autosize="{ minRows: 8, maxRows: 16 }" type="textarea"
+        <el-input @keyup.enter="onKeyup" style="width: 100%;" :autosize="{ minRows: 8, maxRows: 16 }" type="textarea"
             v-model="text"></el-input>
         <div class="button-area">
-            <el-button @click="upload" :disabled="!outputDone">上传图片</el-button>
+            <!-- <el-button @click="upload" :disabled="!outputDone">上传图片</el-button> -->
+            <el-button @click="clear" type="danger">清空对话</el-button>
             <div class="right-button">
                 <el-button type="primary" :disabled="imageFiles.length === 0 && text === '' || !outputDone"
                     @click="onSend">发送</el-button>
@@ -18,6 +19,8 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useMessageStore } from '../store/MessageStore';
+const messageStore = useMessageStore();
 import ImageComponent from './ImageComponent.vue';
 const props = defineProps<{
     outputDone: Boolean,
@@ -25,7 +28,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['send', 'stop']);
 const text = ref('');
-
+const clear = () => {
+    messageStore.messages = [];
+    window.location.reload();
+}
 const outputDone = ref(props.outputDone);
 
 watch(() => props.outputDone, () => {
@@ -80,6 +86,10 @@ const onKeyup = (event: KeyboardEvent) => {
 }
 </script>
 <style scoped>
+div /deep/.el-input__inner {
+  background-color: transparent !important;
+  border: 1px solid #1296db;
+}
 .input-box {
     border-radius: 20px;
     min-width: 400px;
@@ -99,7 +109,7 @@ const onKeyup = (event: KeyboardEvent) => {
 }
 
 .text-area {
-    width: 300px;
+    width: 200px;
     height: 100%;
     border: none;
     outline: none;
@@ -123,10 +133,12 @@ const onKeyup = (event: KeyboardEvent) => {
 @media screen and (max-width: 600px) {
     .input-box {
         min-width: 300px;
+
     }
 
     .text-area {
         width: 200px;
+
     }
 
 
