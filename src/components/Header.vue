@@ -45,12 +45,18 @@ const handelUpdateLog=()=>{
   drawerVisible.value=true;
 }
 const log = ref('');
-fetch('https://raw.githubusercontent.com/ProgramCX/deepseek-r1-chat/refs/heads/main/doc/CHANGELOG.md')
+fetch('https://assets.programcx.cn/austai/CHANGELOG.md',{
+  method: 'GET',
+  headers: {
+      'Content-Type': 'text/plain',
+  },
+  mode: 'cors',
+})
   .then(response => response.text())
   .then(data => {
     log.value = data;
   }).catch(() => {
-    log.value = '由于网络因素，更新日志加载失败。还请刷新试试。';
+    log.value = '更新日志加载失败。请联系程旭：2024305222@aust.edu.cn';
   });
 </script>
 
@@ -62,11 +68,9 @@ fetch('https://raw.githubusercontent.com/ProgramCX/deepseek-r1-chat/refs/heads/m
   top: 0;
   left: 0;
   height: 70px;
-  background-color: rgb(244, 244, 244, 0.5);
-  box-shadow: 0px 2px 11px 0px rgba(100, 100, 111, 0.2);
-  backdrop-filter: blur(10px);
-  border-bottom-right-radius: 15px;
-  border-bottom-left-radius: 15px;
+  border-bottom: #ecebeb 1px solid;
+  backdrop-filter: blur(40px);
+
   display: flex;
   justify-content: space-between;
   align-items: center;

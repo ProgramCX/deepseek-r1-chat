@@ -5,9 +5,10 @@
 <script lang="ts" setup>
 import { ref, watch, nextTick } from "vue";
 import { marked, type Token, type Tokens } from "marked";
+import MathJax from "../util/MathJax";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
-
+import ClipboardJS from "clipboard";
 const props = defineProps<{
     content: string;
     finished: boolean;
@@ -29,37 +30,38 @@ marked.use({
 
 // 解析 Markdown
 const updateData = async () => {
-    let content = props.content.replace(/<think>([\s\S]*?)<\/think>/g, '<blockquote>$1</blockquote>');
+    let content = props.content.replace(/<think>([\s\S]*?)<\/think>/g, '<blockquote>$1</blockquote>').replace(/\[([\s\S]*?)\]/g, '\\\[$1\\]').replace(/\(([\s\S]*?)\)/g, '\\\($1\\)');
     if (!outputFinished.value) {
         content += '⚫';
     }
     data.value = await marked(content);
-    // 等待 DOM 更新后添加事件监听
     nextTick(() => {
-        const copyButtons = document.querySelectorAll("#copy-btn");
-        copyButtons.forEach((button) => {
-            button.addEventListener("click", copyCode);
+      if (MathJax.isMathjaxConfig) { // 是否配置MathJax
+            MathJax.initMathjaxConfig()
+          }
+    MathJax.MathQueue('markdown-body');
+        new ClipboardJS("#copy-btn", {
+            target: (trigger) => trigger.previousElementSibling,
+        }).on("success", (e) => {
+            e.trigger.textContent = "已复制";
+            setTimeout(() => (e.trigger.textContent = "复制"), 1000);
+            e.clearSelection();
         });
     });
 };
 
-// 复制代码
-const copyCode = (event: Event) => {
-    const button = event.target as HTMLButtonElement;
-    const codeElement = button.previousElementSibling as HTMLElement;
-    if (!codeElement) return;
-
-    const codeText = codeElement.innerText;
-    navigator.clipboard.writeText(codeText).then(() => {
-        button.textContent = "已复制";
-        setTimeout(() => (button.textContent = "复制"), 1000);
-    });
-};
-
 setInterval(() => {
-    const thinkElements = document.querySelectorAll("think");
+    const thinkElements = document.querySelectorAll("blockquote");
     //如果标签为空，则隐藏
     thinkElements.forEach((thinkElement:Element) => {
+        if (thinkElement.textContent=='\n\n') {
+            thinkElement.style.display = "none";
+        }
+    });
+
+    const thinkElements2 = document.querySelectorAll("think");
+    //如果标签为空，则隐藏
+    thinkElements2.forEach((thinkElement:Element) => {
         if (thinkElement.textContent=='\n\n') {
             thinkElement.style.display = "none";
         }
@@ -118,6 +120,7 @@ watch(() => props.finished, () => {
   width: 100%;
   padding: 20px;
   font-size: 14px;
+  padding-top: 35px;
   border: 2px solid #a0a0a027;
 }
 
@@ -249,8 +252,19 @@ think{
   border-left: 3px solid #2983cc;
 }
 
+blockquote:empty{
+  display: none;
+}
+
 think:empty{
   display: none;
 }
 
+@media screen and (max-width: 768px) {
+  .markdown-body pre code.hljs{
+  left: 0;
+   max-width: 90vw;
+  }
+  
+}
 </style>

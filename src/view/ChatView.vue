@@ -1,12 +1,12 @@
 <template>
     <div class="chat-view" :class="{ 'init-chat-view': isInitChatView }">
-        <h1 v-if="isInitChatView" style="text-align: center;">有什么我们可以帮你的吗？</h1>
+        <h1 v-if="isInitChatView" style="text-align: center;" class="bounce">有什么我们可以帮你的吗？</h1>
         <div v-else class="chat-container">
             <BubbleComponent v-for="(message, index) in messages" :content-text="message.content" :type="message.role"
-                :id="index" :finished="outputDone" @refresh="handleRefresh" @edited="handleEdited" class="bubble" />
+                :id="index" :finished="outputDone" @refresh="handleRefresh" @edited="handleEdited" class="bubble-chat" />
         </div>
         <div class="chat-input" :class="{ 'fixed-bottom': !isInitChatView }">
-            <InputBox :output-done="outputDone" @send="handleSend" @stop="handleStop" class="input-box" />
+            <InputBox :output-done="outputDone" @send="handleSend" @stop="handleStop" class="input-box" :class="{'init-chat-input':isInitChatView}" :default-role-id="currentRoleId"/>
         </div>
 
     </div>
@@ -16,19 +16,25 @@ import { onMounted, ref } from 'vue';
 import { useMessageStore, type chatMessage } from '../store/MessageStore.ts';
 import BubbleComponent from '../components/BubbleComponent.vue';
 import InputBox from '../components/InputBox.vue';
-import { sendDeepseekMessage ,stopDeepseekMessage} from '../api/index.ts';
-
+import { sendDeepseekMessage, stopDeepseekMessage } from '../api/index.ts';
 const messageStore = useMessageStore();
 const messages = ref([] as chatMessage[]);
 
 const outputDone = ref(true);
 const isInitChatView = ref(true);
+
+const controller = ref({} as AbortController);
+
+const currentRoleId = ref(useMessageStore().currentRoleId);
+
 onMounted(() => {
     messages.value = [...messageStore.messages];
     if (messages.value.length > 0) {
         isInitChatView.value = false;
     }
-    window.scrollTo(0, document.body.scrollHeight);
+    setTimeout(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+    }, 1);
 });
 
 const handleRefresh = (id: number) => {
@@ -54,17 +60,17 @@ const sendModifiedMessage = (text: string, id: number) => {
 
     outputDone.value = false;
 
-
-    sendDeepseekMessage(text).then((data) => {
+    controller.value = new AbortController();
+    sendDeepseekMessage(text, controller.value,currentRoleId.value).then((data) => {
         messages.value[messages.value.length - 1].content = data.message;
         outputDone.value = true;
         if (data.message) {
             isInitChatView.value = false;
         }
         window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
     });
 }
 
@@ -72,7 +78,12 @@ const handleEdited = (content: string, id: number) => {
     sendModifiedMessage(content, id);
 }
 
-const handleSend = (message: { text: string, image: string[] }) => {
+const handleSend = (message: { text: string, roleId: number, image: string[] }) => {
+    if(currentRoleId.value != message.roleId) {
+        currentRoleId.value = message.roleId;
+        messages.value = [];
+        messageStore.messages = [];
+    }
     isInitChatView.value = false;
     outputDone.value = false;
     messages.value.push({
@@ -86,7 +97,11 @@ const handleSend = (message: { text: string, image: string[] }) => {
     });
     outputDone.value = false;
 
-    sendDeepseekMessage(message.text).then((data) => {
+    if (controller.value) {
+        stopDeepseekMessage(controller.value);
+    }
+    controller.value = new AbortController();
+    sendDeepseekMessage(message.text, controller.value,currentRoleId.value).then((data) => {
         window.scrollTo({
             top: document.body.scrollHeight,
             behavior: 'smooth'
@@ -97,18 +112,22 @@ const handleSend = (message: { text: string, image: string[] }) => {
             isInitChatView.value = false;
         }
         window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
     });
 }
 
 const handleStop = () => {
     outputDone.value = true;
-    stopDeepseekMessage();
+    stopDeepseekMessage(controller.value);
 }
+
 </script>
 <style scoped>
+.bounce {
+    animation: zoomIn 0.5s;
+}
 .chat-view {
     width: 100%;
     min-height: calc(100vh - 64px);
@@ -117,7 +136,6 @@ const handleStop = () => {
     justify-content: center;
     align-items: center;
     gap: 100px;
-
 }
 
 .chat-container {
@@ -130,32 +148,63 @@ const handleStop = () => {
 }
 
 .chat-input {
-    width: 100%;
+    width: 80%;
     height: fit-content;
     display: flex;
     justify-content: center;
-    padding: 10px;
-    background-color: rbg(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    --webkit-backdrop-filter: blur(10px);
+    padding: 0 5px;
+    background-color: white;
 }
 
-
 .input-box {
-    width: 80%;
+    width: 100%;
     height: fit-content;
+    animation: fadeInDown;
+    animation-duration: 0.5s;
 }
 
 .init-chat-view {
     align-items: center;
 }
 
-.bubble {
+.init-chat-input {
+   box-shadow: 0px 1px 11px 0px rgba(100, 100, 111, 0.2);
+   animation: fadeInUp;
+    animation-duration: 0.5s; 
+}
+
+.bubble-chat {
     width: 100%;
 }
 
 .fixed-bottom {
     position: sticky;
     bottom: 0;
+    width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+    .bubble {
+        max-width: 400px;
+        padding: 10px; 
+        word-break: break-word; 
+    }
+    .bubble-wrapper {
+        padding-left: 10px; 
+        padding-right: 10px; 
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    .bubble {
+        max-width: 800px;
+        padding: 10px; 
+        word-break: break-word; 
+    }
+    .bubble-wrapper {
+        padding-left: 10px; 
+        padding-right: 10px; 
+    }
+    
 }
 </style>

@@ -1,5 +1,7 @@
 import { createApp } from 'vue'
 import './style.css'
+import 'animate.css';
+// import './util/mathjax' 
 import App from './App.vue'
 import {createPinia} from 'pinia'
 

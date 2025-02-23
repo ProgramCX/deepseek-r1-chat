@@ -3,19 +3,21 @@
         <img :src="avatarSrc" :class="['avatar', roleType]" />
         <div class="bubble" :class="roleType">
             <div class="editor" v-if="isEditMode">
-                <el-input id="input-edit" v-if="isEditMode" v-model="data" cols="58" rows="20" type="textarea" :autosize="{ minRows: 2, maxRows: 4 }" />
+                <el-input @keydown.enter="onKeydown" id="input-edit" v-if="isEditMode" v-model="data" cols="58" rows="20" type="textarea" :autosize="{ minRows: 2, maxRows: 4 }" />
                 <div class="buttons">
                     <el-button @click="isEditMode = false; data = oldData">取消</el-button>
-                    <el-button type="primary" @click="edited">发送</el-button>
+                    <el-button type="primary" @click="edited" :disabled="data.trim().length===0">发送</el-button>
                 </div>
             </div>
             <MarkDown :content="data" :finished="outputFinished" v-else />
         </div>
         <div class="tool-buttons" v-if="outputFinished" :class="roleType">
-            <el-tooltip content="复制" placement="top" v-if="!isEditMode">
-                <el-button circle @click="copyText"><el-icon>
+            <el-tooltip content="复制" placement="top" v-if="!isEditMode" >
+                <el-button circle :id="`copy-btn-${props.id}`" :data-clipboard-text="data" class="copy-btn">
+                    <el-icon>
                         <CopyDocument />
-                    </el-icon></el-button>
+                    </el-icon>
+                </el-button>
             </el-tooltip>
             <el-tooltip content="刷新" placement="top" v-if="roleType == 'assistant' && !isEditMode">
                 <el-button circle @click="refresh"><el-icon>
@@ -32,8 +34,9 @@
 </template>
 <script lang="ts" setup>
 import MarkDown from './MarkDown.vue';
-import { computed, defineProps, nextTick, watch } from 'vue';
-import { ref } from 'vue';
+import ClipboardJS from 'clipboard';
+
+import { computed, defineProps, nextTick, watch, onMounted, onBeforeUnmount, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useMessageStore } from '../store/MessageStore';
 
@@ -67,7 +70,14 @@ const roleType = computed(() => {
 const avatarSrc = computed(() => {
     return roleType.value === 'user' ? userAvatar : assistantAvatar;
 });
-
+const onKeydown = (event: KeyboardEvent) => {
+    if (event.shiftKey) {
+        return;
+      }
+      edited();
+      event.preventDefault(); 
+    
+    }
 watch(() =>useMessageStore().messages, () => {
     // 判断是否是当前对话
     //if(useMessageStore().messages.length -1  === props.id) {
@@ -78,12 +88,24 @@ watch(() =>useMessageStore().messages, () => {
     }
 }, { immediate: true });
 
-// 复制文本
-const copyText = () => {
-    navigator.clipboard.writeText(data.value).then(() => {
-        ElMessage.success('复制成功');
-    });
-};
+const clip = ref<ClipboardJS | null>(null);
+
+onMounted(() => {
+    if (!clip.value) {
+        clip.value = new ClipboardJS(`#copy-btn-${props.id}`);
+        clip.value.on('success', (e) => {
+            ElMessage.success('复制成功');
+            e.clearSelection();
+        });
+        clip.value.on('error', () => {
+            ElMessage.error('复制失败');
+        });
+    }
+});
+
+onBeforeUnmount(() => {
+    clip.value?.destroy();
+});
 
 //重新生成
 const refresh = () => {
@@ -151,14 +173,16 @@ textarea {
     height: fit-content;
     border-radius: 20px;
     padding: 5px 15px;
-    background-color: rgb(243, 243, 243);
+    background-color: rgb(250, 250, 250);
     overflow-x: auto;
-    box-shadow: 0px 0px 14px 0px rgba(100, 100, 111, 0.2);
     cursor: text;
+    border: rgba(230, 230, 230, 0.6) 0.5px solid;
+
 }
 
 .bubble:hover {
-    box-shadow: none;
+    transition: background-color 0.3s;
+    background-color: #f8f7f7;
 }
 
 .bubble-wrapper {
@@ -167,17 +191,22 @@ textarea {
     flex-direction: column;
     padding: 10px 60px;
     gap: 20px;
-    background-color: #fff;
-    box-shadow: none;
     width: 100%;
+    overflow-x:hidden;
 }
+
 
 .user {
     align-self: flex-end;
+    animation: fadeInRight;
+    animation-duration: 500ms;
+
 }
 
 .assistant {
     align-self: flex-start;
+    animation: fadeInLeft;
+    animation-duration: 500ms;
 }
 
 .editor {
@@ -189,10 +218,13 @@ textarea {
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
+    background-color: #f9f9f9;
+    border: 1px rgb(225,225,225,0.3) solid;
+    padding: 10px;
 }
 
 .user.avatar {
@@ -212,10 +244,12 @@ textarea {
 @media screen and (max-width: 768px) {
     .bubble {
         max-width: 400px;
+        padding: 10px;
+        word-break: break-word;
     }
     .bubble-wrapper {
-        padding-left: 0px;
-        padding-right: 0px;
+        padding-left: 10px; 
+        padding-right: 10px; 
     }
 }
 </style>
