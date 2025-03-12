@@ -81,6 +81,7 @@ const onKeydown = (event: KeyboardEvent) => {
 watch(() =>useMessageStore().messages, () => {
     // 判断是否是当前对话
     //if(useMessageStore().messages.length -1  === props.id) {
+    console.log(useMessageStore().messages.length, props.id)
     if(useMessageStore().messages.length === props.id) {
         isCurrent.value = true;
     } else {
@@ -123,10 +124,10 @@ watch(() => props.contentText, () => {
 }, { immediate: true });
 
 watch(() => props.finished, () => {
-    if(props.type === 'user'){
-        outputFinished.value = true;
-        return;
-    }
+    // if(props.type === 'user'){
+    //     outputFinished.value = true;
+    //     return;
+    // }
     if(isCurrent.value)
         outputFinished.value = props.finished;
     else
@@ -134,16 +135,24 @@ watch(() => props.finished, () => {
 }, { immediate: true });
 
 watch(() => isCurrent, () => {
-    if(props.type === 'user'){
-        outputFinished.value = true;
-        return;
-    }
+    // if(props.type === 'user'){
+    //     outputFinished.value = true;
+    //     return;
+    // }
+    console.log('isCurrent', isCurrent.value,props.id,useMessageStore().messages.length);
     if(isCurrent.value)
         outputFinished.value = props.finished;
     else
         outputFinished.value = true;
 }, { immediate: true });
 
+watch(()=>useMessageStore().messages.length,()=>{
+    if(useMessageStore().messages.length === props.id) {
+        isCurrent.value = true;
+    } else {
+        isCurrent.value = false;
+    }
+},{immediate:true})
 nextTick(()=>{
     window.scrollTo({
         top: document.body.scrollHeight,

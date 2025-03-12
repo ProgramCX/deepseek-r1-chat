@@ -35,7 +35,7 @@ onMounted(() => {
     setTimeout(() => {
         window.scrollTo(0, document.body.scrollHeight);
     }, 1);
-});
+    });
 
 const handleRefresh = (id: number) => {
     const text = messageStore.messages[id - 1].content;
@@ -58,22 +58,28 @@ const sendModifiedMessage = (text: string, id: number) => {
         content: '<img src="https://assets.programcx.cn/index.svg" height="50px" />',
     });
 
-    outputDone.value = false;
-
     controller.value = new AbortController();
-    sendDeepseekMessage(text, controller.value,currentRoleId.value).then((data) => {
-        messages.value[messages.value.length - 1].content = data.message;
-        outputDone.value = true;
-        if (data.message) {
+
+    outputDone.value = true;
+    sendDeepseekMessage(text, controller.value,currentRoleId.value,(updatedText:string)=>{
+        messages.value[messages.value.length - 1].content = updatedText;
+        outputDone.value = false;
+        if (updatedText) {
             isInitChatView.value = false;
         }
         window.scrollTo({
             top: document.body.scrollHeight,
             behavior: 'smooth'
         });
+    }).then(() => {
+        outputDone.value = true;
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
     });
-}
 
+}
 const handleEdited = (content: string, id: number) => {
     sendModifiedMessage(content, id);
 }
@@ -95,22 +101,21 @@ const handleSend = (message: { text: string, roleId: number, image: string[] }) 
         role: 'assistant',
         content: '<img src="https://assets.programcx.cn/index.svg" height="40px" />',
     });
-    outputDone.value = false;
+    outputDone.value = true;
 
-    if (controller.value) {
-        stopDeepseekMessage(controller.value);
-    }
     controller.value = new AbortController();
-    sendDeepseekMessage(message.text, controller.value,currentRoleId.value).then((data) => {
+    sendDeepseekMessage(message.text, controller.value,currentRoleId.value,(updatedText:string)=>{
+        messages.value[messages.value.length - 1].content = updatedText;
+        outputDone.value = false;
+        if (updatedText) {
+            isInitChatView.value = false;
+        }
         window.scrollTo({
             top: document.body.scrollHeight,
             behavior: 'smooth'
         });
-        messages.value[messages.value.length - 1].content = data.message;
+    }).then(() => {
         outputDone.value = true;
-        if (data.message) {
-            isInitChatView.value = false;
-        }
         window.scrollTo({
             top: document.body.scrollHeight,
             behavior: 'smooth'
